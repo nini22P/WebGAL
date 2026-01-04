@@ -1,4 +1,4 @@
-import { FC, useEffect, useRef } from 'react';
+import { FC, useEffect } from 'react';
 import styles from './logo.module.scss';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store/store';
@@ -36,28 +36,33 @@ const Logo: FC = () => {
     }
   }, [isEnterGame]);
 
-  const currentLogoUrl = currentLogoIndex.value === -1 ? '' : logoImage[currentLogoIndex.value];
+  const isShow = currentLogoIndex.value !== -1;
+
   return (
     <>
-      {currentLogoIndex.value !== -1 && (
-        <div
-          key={currentLogoIndex.value + 'wh'}
-          className={
-            styles.Logo_Back + ' ' + (currentLogoIndex.value === logoImage.length - 1 ? styles.animationActive : '')
-          }
-          style={{
-            animationDuration: `${animationDuration}ms`,
-          }}
-        />
-      )}
-      {currentLogoUrl !== '' && (
-        <div
-          className={styles.Logo_main}
-          key={currentLogoIndex.value + 'bg'}
-          onClick={nextImg}
-          style={{ backgroundImage: `url("${currentLogoUrl}")`, animationDuration: `${animationDuration}ms` }}
-        />
-      )}
+      {/* 预加载图片 */}
+      {logoImage.map((url) => (
+        <link key={`preload-${url}`} rel="preload" href={url} as="image" />
+      ))}
+
+      {isShow &&
+        logoImage.map((url, index) => {
+          const isSkipped = index < currentLogoIndex.value;
+          const isCurrent = index === currentLogoIndex.value;
+          return (
+            <div
+              key={`${index}-${currentLogoIndex.value}`}
+              className={`${styles.Logo_main} ${isCurrent ? styles.Logo_animation : ''}`}
+              onClick={nextImg}
+              style={{
+                backgroundImage: `url("${url}")`,
+                animationDuration: `${animationDuration}ms`,
+                zIndex: 14 + (logoImage.length - index),
+                visibility: isSkipped ? 'hidden' : 'visible',
+              }}
+            />
+          );
+        })}
     </>
   );
 };
